@@ -20,10 +20,10 @@ var sfxWrong = new Audio("assets/sfx/incorrect.wav");
 
 function questionClick(){
     if(this.value !== questions[currentQuestionIndex].answer) {
-    timerElement.textContent = time;
+    timer -= 15;
     
     if(time <=0){
-        quizEnd();
+        time = 0;
     }
     
  timerElement.textContent = time;  
@@ -31,16 +31,30 @@ function questionClick(){
  feedBackElement.textContent = "Wrong"
 } else {
     sfxRight.play();
-    feedBackElement.textContent ="Correct"
+    feedBackElement.textContent ="Correct";
 }
 
+feedBackElement.setAttribute("class", "feedback");
+
+setTimeout(function (){
+    feedBackElement.setAttribute("class", "feedback hide")
+},1000),
+
+currentQuestionIndex++;
+
+if(currentQuestionIndex === questions.length) {
+    quizEnd()
+} else {
+    getQuestion();
+}
+}
 
 function getQuestion (){
 //get current question object from array
 let currentQuestion = questions[currentQuestionIndex];
 
 //update title with current question
-var titleElement = document.getElementById("question-title");
+let titleElement = document.getElementById("question-title");
 titleElement.textContent = currentQuestion.title;
 
 //clear out any old queston choices
@@ -53,16 +67,27 @@ currentQuestion.choices.forEach(function(choice, index) {
     choiceButton.setAttribute("class", "choice");
     choiceButton.setAttribute("value", choice);
 
-    choiceButton.textContent = index + 1 + ". " + choice;
+    choiceButton.textContent = `${index + 1}. ${choice}`
 
     //attach click event Listener to each choice
     choiceButton.addEventListener = ("click", questionClick);
 
     //display on the page
-    choicesElement.appendChild(choiceButton);
+    choicesElement.append(choiceButton);
 
 });
 
+function quizEnd(){
+    clearInterval(timerID);
+    
+    let endsScreenElement = document.getElementById("end-screen");
+    endsScreenElement.removeAttribute("class");
+    
+    let finalScoreElement = document.getElementById("final-score");
+    finalScoreElement.textContent = time;
+    
+    questionsElement.setAttribute("class", "hide");
+    }
 
 
 }
@@ -81,27 +106,45 @@ timerElement.textContent = time;
 getQuestion();
 }
 
-function quizEnd(){
-clearInterval(timerID);
-
-let endsScreenElement = document.getElementById("end-screen");
-endsScreenElement.removeAttribute("class");
-
-let finalScoreElement = document.getElementById("final-score");
-finalScoreElement.textContent = time;
-
-}
 
 function clockTick(){
+time--;
+timerElement.textContent = time;
 
+if(time<= 0) {
+    quizEnd();
+}
 }
 
-function saveHighScore(){
+function saveHighScore() {
+  //get value of input box
+  let initials = initialsEllement.value.trim();
 
+  //make sure value wasn't empty
+  if (initials !== "") {
+      // get saved scores from localstorage, or if not any, set to empty array
+      let highscores =
+          JSON.parse(localStorage.getItem("highscores"))  || [];
+
+      //format new score object for current user
+      let newScore = {
+          score: time,
+          initials: initials
+        };
+
+ //save to localstorage
+ highScores.push(newScore);
+ window.localStorage.setItem("highscores", JSON.stringify(highscores));
+
+ //redirect to next page
+ window.location.href = "highscores.html";
+    }
 }
 
 function checkForEnter(event){
-
+if(event.key ==="Enter") {
+    saveHighScore();
+}
 }
 
 
@@ -109,4 +152,4 @@ startButton.addEventListener("click", startQuiz);
 
 submitButton.addEventListener("click", saveHighScore);
 
-initialElement.addEventListener("keyup", checkForEnter);}
+initialElement.addEventListener("keyup", checkForEnter);  
